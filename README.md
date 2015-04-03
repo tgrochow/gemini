@@ -1,4 +1,4 @@
-# gemini
+# Gemini
 USB Security
 
 # Resources
