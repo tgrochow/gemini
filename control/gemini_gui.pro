@@ -1,4 +1,4 @@
-TARGET     = gemini_gui
+TARGET     = gemini_control
 
 TEMPLATE   = app
 

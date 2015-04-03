@@ -1,4 +1,4 @@
-TARGET    = gemini_server
+TARGET    = gemini_daemon
 
 TEMPLATE  = app
 
