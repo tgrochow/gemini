@@ -78,15 +78,16 @@ std::string const descriptor::info(bool readable) const
       {
         switch(index)
         {
-          case BUS             : descriptor_info += "[BUS]";            break;
-          case PORT            : descriptor_info += "[PORT]";            break;
-          case VENDOR_ID       : descriptor_info += "[VENDOR ID]";       break;
-          case PRODUCT_ID      : descriptor_info += "[PRODUCT ID]";      break;
-          case INTERFACE_CLASS : descriptor_info += "[INTERFACE CLASS]"; break;
+          case BUS             : descriptor_info += "[BUS:";            break;
+          case PORT            : descriptor_info += "[PORT:";            break;
+          case VENDOR_ID       : descriptor_info += "[VENDOR ID:";       break;
+          case PRODUCT_ID      : descriptor_info += "[PRODUCT ID:";      break;
+          case INTERFACE_CLASS : descriptor_info += "[INTERFACE CLASS:"; break;
         }
       }
 
-      descriptor_info += std::to_string(info_[index]);
+      descriptor_info += std::to_string(info_[index])
+                      +  "]";
     }
 
     return descriptor_info;

@@ -35,7 +35,7 @@ class rule_set
 
   std::string path_;
 
-  const char * ROOT_DIR_ = "/etc/usb_filter/";
+  const char * ROOT_DIR_ = "/etc/gemini/";
 };
 
 }

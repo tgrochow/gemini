@@ -61,10 +61,11 @@ namespace gemini
 
     rule_info += " ";
 
-    if(readable) rule_info += "[PERMISSION]";
+    if(readable) rule_info += "[PERMISSION:";
 
 
-    rule_info += std::to_string(permission_);
+    rule_info += std::to_string(permission_)
+              +  "]";
 
 
     return rule_info;
