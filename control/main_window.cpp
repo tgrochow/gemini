@@ -645,8 +645,8 @@ void main_window::add_device(gemini::device_info const& info)
   QTreeWidgetItem * device_item = new QTreeWidgetItem(ui->device_tree);
 
   // get device description
-  QString device_text(info.device_strings_[PRODUCT_STRING].c_str()),
-          vendor_text(info.device_strings_[VENDOR_STRING].c_str());
+  QString device_text(info.device_strings_[gemini::PRODUCT_STRING].c_str()),
+          vendor_text(info.device_strings_[gemini::VENDOR_STRING].c_str());
 
   // set description
   device_item->setText(0,device_text);
@@ -720,6 +720,7 @@ update_device_tree(std::vector<gemini::device_info> & update)
       unsigned short intf_id = 0;
 
       QTreeWidgetItem * intf_item;
+
 
       // for every interface on device
       for(auto intf_it  = device_info->intf_settings_.begin() ;

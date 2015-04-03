@@ -41,7 +41,6 @@ void device_info::parse_device(std::string const& input)
     {
       ss >> token;
 
-
       device_values_[value_index] = std::stoi(token);
     }
 
@@ -79,28 +78,24 @@ void device_info::parse_device(std::string const& input)
 }
 
 
-// operators
-bool operator == (device_info const& d1 , device_info const& d2)
+bool operator < (device_info const& d1 , device_info const& d2)
 {
-  for(unsigned short type = BUS ; type != UNDEFINED ; ++type)
+  for(unsigned short value_index(BUS) ;
+                     value_index < INTERFACE_NUMBER ; ++value_index)
   {
-    if(d1.device_values_[type] != d2.device_values_[type])
+    if(d1.device_values_[value_index] != d2.device_values_[value_index])
     {
-      return false;
+      return d1.device_values_[value_index] < d2.device_values_[value_index];
     }
   }
 
-  return true;
+  return false;
 }
 
-bool operator  < (device_info const& d1 , device_info const& d2)
-{
-  if(d1.device_values_[BUS] == d2.device_values_[BUS])
-  {
-    return d1.device_values_[PORT] < d2.device_values_[PORT];
-  }
 
-  return d1.device_values_[BUS] < d2.device_values_[BUS];
+bool operator == (device_info const& d1 , device_info const& d2)
+{
+  return !(d1 < d2) && !(d2 < d1);
 }
 
 

@@ -9,15 +9,12 @@
 #include <libusb-1.0/libusb.h>
 
 
-enum device_string{PRODUCT_STRING,VENDOR_STRING,UNDEFINED_STRING};
-enum device_value {BUS,PORT,VENDOR_ID,PRODUCT_ID,INTERFACE_NUMBER,UNDEFINED};
-
-
-#define index_value_shift UNDEFINED_STRING
-
-
 namespace gemini
 {
+  enum device_string{PRODUCT_STRING,VENDOR_STRING,UNDEFINED_STRING};
+  enum device_value {BUS,PORT,VENDOR_ID,PRODUCT_ID,INTERFACE_NUMBER,UNDEFINED};
+
+  #define index_value_shift UNDEFINED_STRING
 
   struct device_info
   {
@@ -40,9 +37,8 @@ namespace gemini
   };
 
   // operator
-  bool operator == (device_info const& d1 , device_info const& d2);
   bool operator  < (device_info const& d1 , device_info const& d2);
-
+  bool operator == (device_info const& d1 , device_info const& d2);
 }
 
 #endif // GEMINI_DEVICE_INFO
