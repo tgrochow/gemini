@@ -1,0 +1,9 @@
+<RCC>
+    <qresource prefix="/icons">
+        <file alias="disabled">disabled.png</file>
+        <file alias="enabled">enabled.png</file>
+        <file alias="add">add.png</file>
+        <file alias="remove">remove.png</file>
+        <file alias="upload">upload.png</file>
+    </qresource>
+</RCC>
