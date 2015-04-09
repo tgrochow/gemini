@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Gemini USB Security
+GenericName=USB Security
+Comment=USB Security
+Exec=gksudo -k -u root /usr/sbin/gemini_control
+Icon=/usr/share/pixmaps/gemini_control.xpm
+Terminal=false
+Type=Application
+StartupNotify=false
+Categories=USB;Security;

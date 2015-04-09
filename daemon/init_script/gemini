@@ -1,0 +1,20 @@
+#! /bin/sh
+# /etc/init.d/gemini
+
+touch /usr/sbin/gemini_daemon
+
+case "$1" in
+start)
+echo "Starting Gemini USB Security ... "
+/usr/sbin/gemini_daemon
+;;
+stop)
+echo "Stop Gemini USB Security ..."
+killall gemini_daemon
+;;
+*)
+echo "Usage: /etc/init.d/gemini {start|stop}"
+exit 1
+;;
+esac
+exit 0

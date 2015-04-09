@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>560</width>
-    <height>569</height>
+    <width>600</width>
+    <height>609</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,8 +19,8 @@
      <rect>
       <x>0</x>
       <y>0</y>
-      <width>561</width>
-      <height>511</height>
+      <width>601</width>
+      <height>551</height>
      </rect>
     </property>
     <property name="currentIndex">
@@ -28,22 +28,22 @@
     </property>
     <widget class="QWidget" name="tab_device_tree">
      <attribute name="title">
-      <string>current devices</string>
+      <string>device tree</string>
      </attribute>
      <widget class="QTreeWidget" name="device_tree">
       <property name="geometry">
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>511</width>
-        <height>481</height>
+        <width>551</width>
+        <height>521</height>
        </rect>
       </property>
       <property name="sortingEnabled">
        <bool>false</bool>
       </property>
       <attribute name="headerDefaultSectionSize">
-       <number>200</number>
+       <number>225</number>
       </attribute>
       <column>
        <property name="text">
@@ -66,15 +66,15 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>511</width>
-        <height>481</height>
+        <width>551</width>
+        <height>521</height>
        </rect>
       </property>
      </widget>
      <widget class="QWidget" name="layoutWidget">
       <property name="geometry">
        <rect>
-        <x>520</x>
+        <x>560</x>
         <y>10</y>
         <width>30</width>
         <height>183</height>
@@ -131,11 +131,11 @@
      </widget>
     </widget>
    </widget>
-   <widget class="QLabel" name="label">
+   <widget class="QLabel" name="gemini_active_label">
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>520</y>
+      <y>560</y>
       <width>101</width>
       <height>17</height>
      </rect>
@@ -148,7 +148,7 @@
     <property name="geometry">
      <rect>
       <x>110</x>
-      <y>520</y>
+      <y>560</y>
       <width>18</width>
       <height>18</height>
      </rect>
@@ -169,14 +169,57 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>560</width>
+     <width>600</width>
      <height>25</height>
     </rect>
    </property>
    <property name="nativeMenuBar">
     <bool>false</bool>
    </property>
+   <widget class="QMenu" name="menu_rule_set">
+    <property name="title">
+     <string>rule set</string>
+    </property>
+    <addaction name="action_new"/>
+    <addaction name="action_open"/>
+    <addaction name="separator"/>
+    <addaction name="action_save"/>
+    <addaction name="action_remove"/>
+   </widget>
+   <widget class="QMenu" name="menu_device">
+    <property name="title">
+     <string>device tree</string>
+    </property>
+    <addaction name="action_hub_visability"/>
+   </widget>
+   <addaction name="menu_rule_set"/>
+   <addaction name="menu_device"/>
   </widget>
+  <action name="action_open">
+   <property name="text">
+    <string>open</string>
+   </property>
+  </action>
+  <action name="action_new">
+   <property name="text">
+    <string>new</string>
+   </property>
+  </action>
+  <action name="action_save">
+   <property name="text">
+    <string>save</string>
+   </property>
+  </action>
+  <action name="action_hub_visability">
+   <property name="text">
+    <string>hide hubs</string>
+   </property>
+  </action>
+  <action name="action_remove">
+   <property name="text">
+    <string>remove</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources>

@@ -3,6 +3,7 @@
 
 namespace gemini
 {
+  const std::string server::DEFAULT_RULE_SET("default.rules");
 
   server::server() :
   QObject(),
@@ -23,19 +24,20 @@ namespace gemini
 
     delete intf_info_server;
     delete rule_set_server;
-
     delete rule_update_socket_;
   }
+
 
   bool server::start()
   {
     bool valid_start = true;
-    control_.rule_set_.load("default.rules");
+
+    control_.rule_set_.load(read_config());
 
 
     // register handle for rule updates
     connect(rule_update_socket_,SIGNAL(readyRead()),
-            this               ,SLOT(read_rule_update()));
+            this               ,SLOT(process_request()));
 
     // remove old server file
     QLocalServer::removeServer("gemini_interface_info");
@@ -150,12 +152,9 @@ namespace gemini
   }
 
 
-  void server::read_rule_update()
+  void server::process_request()
   {
-    control_.rule_set_.clear();
-
-
-    quint16 block_size = 0;
+    quint16 block_size = 0 , request_type = UNDEFINED_REQUEST;
 
     QDataStream in(rule_update_socket_);
 
@@ -164,26 +163,60 @@ namespace gemini
 
     if(rule_update_socket_->bytesAvailable() >
 
-       static_cast<int> (sizeof(quint16)))
+       2 * static_cast<unsigned short> (sizeof(quint16)))
     {
       in >> block_size;
+      in >> request_type;
 
       char * info_buffer = new char[block_size];
 
 
-      while(!in.atEnd())
-      {
-        in >> info_buffer;
+      QString rule_set_path;
 
-        control_.rule_set_.push_back(rule(info_buffer));
+      switch(request_type)
+      {
+        case UPLOAD_RULE_SET :
+
+          control_.rule_set_.clear();
+
+          while(!in.atEnd())
+          {
+            in >> info_buffer;
+
+            control_.rule_set_.push_back(rule(info_buffer));
+          }
+
+
+          // save rule set
+          control_.rule_set_.save();
+
+          save_config();
+
+          break;
+
+
+        case LOAD_RULE_SET :
+
+        in >> rule_set_path;
+
+        control_.rule_set_.load(rule_set_path.toStdString());
+
+        break;
+
+
+        case SAVE_RULE_SET :
+
+        in >> rule_set_path;
+
+        control_.rule_set_.path(rule_set_path.toStdString());
+
+        break;
       }
 
 
       delete[] info_buffer;
     }
 
-    // save rule set
-    control_.rule_set_.save();
   }
 
 
@@ -208,5 +241,92 @@ namespace gemini
     QTimer::singleShot(update_timer_frequency_,this,SLOT(update()));
 
     ++update_counter_;
+  }
+
+
+  std::string const server::read_config() const
+  {
+    std::string file_name(rule_set::gemini_home_path()),
+                rule_set_name(DEFAULT_RULE_SET);
+
+    file_name += "gemini.config";
+
+    QFile config(QString(file_name.c_str()));
+
+    if(!config.exists())
+    {
+      reset_config(file_name);
+    }
+
+    else
+    {
+      // open input filestream
+      std::ifstream in(file_name,std::ifstream::in);
+
+      std::string activ_rule_set;
+
+      // input file stream is open (exists, not damaged,correct permissions)
+      if(in.is_open())
+      {
+        in >> activ_rule_set;
+
+        QFile rule_set(QString(activ_rule_set.c_str()));
+
+        if(!rule_set.exists()) reset_config(file_name);
+
+        else                   rule_set_name = activ_rule_set;
+
+        in.close();
+      }
+
+      else reset_config(file_name);
+    }
+
+
+    return rule_set_name;
+  }
+
+  void server::reset_config(std::string const& config_name) const
+  {
+    // open output file stream, overwrite old file
+    std::ofstream out(config_name,std::ofstream::out | std::ofstream::trunc);
+
+    // output file stream is valid (no errors, correct permissions)
+    if(out.good())
+    {
+      out << DEFAULT_RULE_SET;
+
+      out.close();
+    }
+  }
+
+  void server::save_config() const
+  {
+    std::string file_name(rule_set::gemini_home_path());
+
+    file_name += "gemini.config";
+
+
+    QFile config(QString(file_name.c_str()));
+
+    if(!config.exists())
+    {
+      reset_config(file_name);
+    }
+
+    else
+    {
+      // open output file stream, overwrite old file
+      std::ofstream out(file_name,std::ofstream::out | std::ofstream::trunc);
+
+      // output file stream is valid (no errors, correct permissions)
+      if(out.good())
+      {
+        out << control_.rule_set_.path();
+
+        // close file stream
+        out.close();
+      }
+    }
   }
 }

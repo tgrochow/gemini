@@ -3,13 +3,16 @@
 
 // std
 #include <map>
+
 // Qt
 #include <QtNetwork>
 #include <QComboBox>
 #include <QMainWindow>
 #include <QMutex>
+
 // gemini
 #include <rule_info.hpp>
+
 // class
 #include "ui_main_window.h"
 
@@ -21,6 +24,7 @@ namespace Ui
 
 class main_window : public QMainWindow
 {
+  // Qt macro (adds important methods, member)
   Q_OBJECT
 
 
@@ -29,7 +33,8 @@ class main_window : public QMainWindow
   main_window(QWidget * parent = nullptr);
   ~main_window();
 
-  bool init() const;
+  // interface, network initialization, returns success
+  bool init();
 
 
   private slots :
@@ -37,8 +42,8 @@ class main_window : public QMainWindow
   // network
   void read_interface_info();
   void read_rule_set();
-  void send_rule_set();
-  void trigger_device_update() const;
+  void send_request();
+  void trigger_update();
 
   // content update
   void update_rule_node(int row,int collumn);
@@ -51,6 +56,11 @@ class main_window : public QMainWindow
   // interaction
   void add_rule();
   void create_interface_rule(QTreeWidgetItem * clicked_item);
+  void hub_visability();
+  void new_rule_set();
+  void open_rule_set();
+  void remove_rule_set();
+  void save_rule_set();
   void remove_rule();
   void rule_up();
   void rule_down();
@@ -58,6 +68,9 @@ class main_window : public QMainWindow
 
 
   private :
+
+  // static
+  static QString const gemini_home_path();
 
   // initialization
   void init_button_icons()            const;
@@ -73,7 +86,8 @@ class main_window : public QMainWindow
   // content update
   void add_rule(gemini::rule_info const& rule);
   void add_device(gemini::device_info const& info);
-  void update_device_tree(std::vector<gemini::device_info> & update);
+  void filter_device_update(std::vector<gemini::device_info> & update);
+  void update_device_tree(std::vector<gemini::device_info> const& update);
   void update_priority(unsigned short row,bool up);
   void update_rule_table();
 
@@ -85,6 +99,9 @@ class main_window : public QMainWindow
   // class member
 
   static const std::string ANY;
+
+  enum request_type{UPLOAD_RULE_SET,LOAD_RULE_SET,SAVE_RULE_SET,
+                    UNDEFINED_REQUEST                           };
 
 
   //object member
@@ -99,12 +116,18 @@ class main_window : public QMainWindow
                   * rule_set_socket_;
   QLocalServer    * rule_upload_server_;
 
+  QString           rule_set_name_;
+
   //timer
   QTimer          * update_timer_;
   unsigned short    update_frequency_;
 
   // condition
-  bool              upload_rules_,
+  bool              hub_visability_,
+                    load_rule_set_,
+                    read_rule_set_,
+                    upload_rules_,
+                    save_rule_set_,
                     server_connection_;
 
   // thread safety

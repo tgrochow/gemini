@@ -1,5 +1,6 @@
 #include "main_window.hpp"
 #include <iostream>
+#include <QFileDialog>
 
 
 // initialize static class member
@@ -18,7 +19,11 @@ rule_set_socket_(new QLocalSocket(this)),
 rule_upload_server_(new QLocalServer(this)),
 update_timer_(new QTimer(this)),
 update_frequency_(1000),
+hub_visability_(true),
+load_rule_set_(false),
+read_rule_set_(true),
 upload_rules_(false),
+save_rule_set_(false),
 server_connection_(true)
 {
   ui->setupUi(this);
@@ -49,7 +54,7 @@ main_window::~main_window()
 
 
 // public : intialization
-bool main_window::init() const
+bool main_window::init()
 {
   bool valid_start = true;
 
@@ -71,7 +76,7 @@ bool main_window::init() const
   else
   {
     // init device tree
-    trigger_device_update();
+    trigger_update();
   }
 
 
@@ -95,22 +100,24 @@ void main_window::read_interface_info()
     device_info.push_back(*input_it);
   }
 
+  if(!hub_visability_) filter_device_update(device_info);
+
+
   // update the device tree with new device info
   update_device_tree(device_info);
 
   if(!server_connection_)
   {
+    // visualize server connection
     QSize label_size(ui->server_icon_label->sizeHint());
 
     QPixmap error_pixmap(icon_enabled_.pixmap(label_size));
 
     ui->server_icon_label->setPixmap(error_pixmap);
 
-    // abort previos connections to rule set server
-    rule_set_socket_->abort();
-    // read init rule set
-    rule_set_socket_->connectToServer("gemini_rule_set");
 
+    // reload rules
+    read_rule_set_     = true;
     server_connection_ = true;
   }
 }
@@ -140,7 +147,7 @@ void main_window::read_rule_set()
 
 
 // private SLOT : network
-void main_window::send_rule_set()
+void main_window::send_request()
 {
   // lock the rule set server for rule transfer
   mutex_rule_transfer_.lock();
@@ -154,7 +161,7 @@ void main_window::send_rule_set()
   connect(client_connection , SIGNAL(disconnected()),
           client_connection , SLOT(deleteLater())    );
 
-  if(upload_rules_ && server_connection_)
+  if(save_rule_set_ && server_connection_)
   {
     QByteArray block;
     QDataStream out(&block,QIODevice::WriteOnly);
@@ -162,11 +169,42 @@ void main_window::send_rule_set()
     out.setVersion(QDataStream::Qt_5_0);
 
     // mark the beginning of the block
-    out << (quint16)0;
+    out << static_cast<quint16> (0);
+
+    // set server request type
+    out << static_cast<quint16> (SAVE_RULE_SET);
+
+    out << rule_set_name_;
+
+
+    // set index back to the beginning of the block
+    out.device()->seek(0);
+    // stream block size in
+    out << (quint16)(block.size() - sizeof(quint16));
+
+    // send stream
+    client_connection->write(block);
+
+    save_rule_set_ = false;
+  }
+
+  else if(upload_rules_ && server_connection_)
+  {
+    QByteArray block;
+    QDataStream out(&block,QIODevice::WriteOnly);
+
+    out.setVersion(QDataStream::Qt_5_0);
+
+    // mark the beginning of the block
+    out << static_cast<quint16> (0);
+
+    // set server request type
+    out << static_cast<quint16> (UPLOAD_RULE_SET);
 
     for(auto rule_it  = rule_nodes_.begin() ;
              rule_it != rule_nodes_.end()   ; ++rule_it)
     {
+      // stream rules
       out << rule_it->rule_string().c_str();
     }
 
@@ -176,13 +214,50 @@ void main_window::send_rule_set()
     // stream block size in
     out << (quint16)(block.size() - sizeof(quint16));
 
-
+    // send stream
     client_connection->write(block);
-    client_connection->flush();
 
     upload_rules_ = false;
   }
 
+  else if(load_rule_set_ && server_connection_)
+  {
+    QByteArray block;
+    QDataStream out(&block,QIODevice::WriteOnly);
+
+    out.setVersion(QDataStream::Qt_5_0);
+
+    // mark the beginning of the block
+    out << static_cast<quint16> (0);
+
+    // set server request type
+    out << static_cast<quint16> (LOAD_RULE_SET);
+
+    out << rule_set_name_;
+
+
+    // set index back to the beginning of the block
+    out.device()->seek(0);
+    // stream block size in
+    out << (quint16)(block.size() - sizeof(quint16));
+
+    // send stream
+    client_connection->write(block);
+
+    // stop update timer (server needs time to load new rule set)
+    update_timer_->stop();
+
+    // mark rule set as old
+    read_rule_set_ = true;
+    load_rule_set_ = false;
+
+    // start timer for update trigger
+    update_timer_->start();
+
+    ui->tab_widget->setCurrentWidget(ui->tab_rule_editor);
+  }
+
+  client_connection->flush();
   client_connection->disconnectFromServer();
 
   // unlock server for new other transfers
@@ -192,12 +267,21 @@ void main_window::send_rule_set()
 
 
 // private SLOT : network
-void main_window::trigger_device_update() const
+void main_window::trigger_update()
 {
   // abort old connection
   intf_info_socket_->abort();
-
   intf_info_socket_->connectToServer("gemini_interface_info");
+
+
+  if(read_rule_set_)
+  {
+    // abort previos connections to rule set server
+    rule_set_socket_->abort();
+    rule_set_socket_->connectToServer("gemini_rule_set");
+
+    read_rule_set_ = false;
+  }
 }
 
 
@@ -218,6 +302,13 @@ void main_window::update_rule_node(int row,int collumn)
 
   if(cell_text == ANY.c_str())
   {
+    rule_nodes_[row].values_[collumn] = 0;
+  }
+
+  else if(cell_text == "")
+  {
+    table_item->setText(ANY.c_str());
+
     rule_nodes_[row].values_[collumn] = 0;
   }
 
@@ -314,6 +405,7 @@ void main_window::socket_error(QLocalSocket::LocalSocketError socket_error)
 
     ui->server_icon_label->setPixmap(error_pixmap);
 
+
     server_connection_ = false;
   }
 
@@ -354,6 +446,101 @@ void main_window::create_interface_rule(QTreeWidgetItem * clicked_item)
       }
     }
   }
+}
+
+
+
+// private SLOT : interaction
+void main_window::hub_visability()
+{
+  hub_visability_ = ! hub_visability_;
+
+  QString text;
+
+  if(hub_visability_)
+  {
+    text = "hide hubs";
+  }
+
+  else
+  {
+    text = "show hubs";
+  }
+
+  ui->action_hub_visability->setText(text);
+}
+
+
+
+// private SLOT : interaction
+void main_window::new_rule_set()
+{
+  unsigned short row_number(ui->rule_table->rowCount());
+
+  for(unsigned short row(0) ; row < row_number ; ++row)
+  {
+    ui->rule_table->removeRow(0);
+  }
+
+  rule_nodes_.clear();
+
+  ui->tab_widget->setCurrentWidget(ui->tab_rule_editor);
+}
+
+
+
+// private SLOT : interaction
+void main_window::open_rule_set()
+{
+  QString home_path(gemini_home_path());
+
+  QString file_name(QFileDialog::getOpenFileName
+  (this,"Load Gemini Rule Set",home_path,"Gemini Rule Set (*.rules)"));
+
+
+  if(QFile(file_name).exists())
+  {
+    rule_set_name_ = file_name;
+
+    load_rule_set_ = true;
+  }
+}
+
+
+
+// private SLOT : interaction
+void main_window::remove_rule_set()
+{
+  QString home_path(gemini_home_path());
+
+  QString file_name(QFileDialog::getOpenFileName
+  (this,"Remove Gemini Rule Set",home_path,"Gemini Rule Set (*.rules)"));
+
+
+  if(QFile(file_name).exists())
+  {
+    QFile(file_name).remove();
+  }
+}
+
+
+
+
+// private SLOT : interaction
+void main_window::save_rule_set()
+{
+  QString home_path(gemini_home_path());
+
+  home_path += rule_set_name_;
+
+  QString file_name(QFileDialog::getSaveFileName
+  (this, tr("Save Gemini Rule Set"),home_path,tr("Gemini Rule Set (*.rules)")));
+
+  rule_set_name_ = file_name;
+
+  save_rule_set_ = true;
+
+  upload_rules_  = true;
 }
 
 
@@ -404,6 +591,27 @@ void main_window::server_upload()
 
 
 
+// private : static
+QString const main_window::gemini_home_path()
+{
+  QString gemini_home_path("/etc");
+
+  gemini_home_path += QDir::separator();
+  gemini_home_path += "gemini";
+
+  QDir gemini_home_dir(gemini_home_path);
+
+  if(!gemini_home_dir.exists())
+  {
+    gemini_home_dir.mkpath(gemini_home_path);
+  }
+
+
+  return gemini_home_path;
+}
+
+
+
 // private : initialization
 void main_window::init_button_icons() const
 {
@@ -436,6 +644,13 @@ void main_window::init_interaction_connection() const
 
   connect(ui->device_tree,SIGNAL(itemDoubleClicked(QTreeWidgetItem *,int)),
           this           ,SLOT(create_interface_rule(QTreeWidgetItem *))   );
+
+  connect(ui->action_new,SIGNAL(triggered()),this,SLOT(new_rule_set()));
+  connect(ui->action_open,SIGNAL(triggered()),this,SLOT(open_rule_set()));
+  connect(ui->action_save,SIGNAL(triggered()),this,SLOT(save_rule_set()));
+  connect(ui->action_remove,SIGNAL(triggered()),this,SLOT(remove_rule_set()));
+  connect(ui->action_hub_visability,SIGNAL(triggered()),
+          this                     ,SLOT(hub_visability()));
 }
 
 
@@ -457,7 +672,7 @@ void main_window::init_network() const
           this            ,SLOT(read_rule_set()));
 
   connect(rule_upload_server_,SIGNAL(newConnection()),
-          this               ,SLOT(send_rule_set()))  ;
+          this               ,SLOT(send_request()))  ;
 
 
   // abort previos connections to rule set server
@@ -487,8 +702,8 @@ void main_window::init_rule_table_header() const
 void main_window::init_rule_table_column_width() const
 {
   const unsigned short value_column_width(65),
-                       class_column_width(126),
-                       permission_column_width(110);
+                       class_column_width(152),
+                       permission_column_width(120);
 
   unsigned short width(0);
 
@@ -521,7 +736,7 @@ void main_window::init_timer() const
   update_timer_->setSingleShot(true);
   update_timer_->setInterval(update_frequency_);
 
-  connect(update_timer_,SIGNAL(timeout()),this,SLOT(trigger_device_update()));
+  connect(update_timer_,SIGNAL(timeout()),this,SLOT(trigger_update()));
 }
 
 
@@ -698,7 +913,32 @@ void main_window::add_device(gemini::device_info const& info)
 // private : content update
 void main_window::
 
-update_device_tree(std::vector<gemini::device_info> & update)
+filter_device_update(std::vector<gemini::device_info> & update)
+{
+  std::function<bool(gemini::device_info const&)> filter =
+
+  [](gemini::device_info const& device)
+  {
+    for(auto intf_it   (device.intf_settings_.begin()) ;
+             intf_it != device.intf_settings_.end()    ; ++intf_it)
+    {
+      if(intf_it->first.front() == LIBUSB_CLASS_HUB) return true;
+    }
+
+    return false;
+  };
+
+  auto new_front = std::remove_if(update.begin(),update.end(),filter);
+
+  update.erase(new_front,update.end());
+}
+
+
+
+// private : content update
+void main_window::
+
+update_device_tree(std::vector<gemini::device_info> const& update)
 {
   // for every device present on server
   for(auto device_info(update.begin()) ;

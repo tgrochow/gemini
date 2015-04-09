@@ -1,7 +1,4 @@
-#include <functional>
 #include <sstream>
-
-#include <sys/stat.h>
 
 #include <rule_set.hpp>
 
@@ -12,6 +9,27 @@ namespace gemini
 rule_set::rule_set(std::string const& path) :
 path_(path)
 {}
+
+
+std::string const rule_set::gemini_home_path()
+{
+  QString gemini_home_path("/etc");
+
+  gemini_home_path += QDir::separator();
+  gemini_home_path += "gemini";
+
+  QDir gemini_user_dir(gemini_home_path);
+
+  if(!gemini_user_dir.exists())
+  {
+    gemini_user_dir.mkpath(gemini_home_path);
+  }
+
+  gemini_home_path += QDir::separator();
+
+
+  return gemini_home_path.toStdString();
+}
 
 
 bool rule_set::permission(descriptor const& desc)
@@ -45,22 +63,21 @@ void rule_set::clear()
 }
 
 
+void rule_set::path(std::string const& new_path)
+{
+  path_ = new_path;
+}
+
+std::string const rule_set::path() const
+{
+  return path_;
+}
+
 // save rule set on hard disk
 void rule_set::save() const
 {
-  struct stat dir_status;
-
-  // if root dir doesn't exist (UNIX)
-  if(stat(ROOT_DIR_,&dir_status) != 0 || !S_ISDIR(dir_status.st_mode))
-  {
-    // make root directory (UNIX)
-    mkdir(ROOT_DIR_,S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-  }
-    
-
   // open output file stream, overwrite old file
-  std::ofstream out(ROOT_DIR_ + path_ ,
-                    std::ofstream::out | std::ofstream::trunc);
+  std::ofstream out(path_,std::ofstream::out | std::ofstream::trunc);
 
   // output file stream is valid (no errors, correct permissions)
   if(out.good())
@@ -82,7 +99,7 @@ void rule_set::save() const
 void rule_set::load(std::string const& path)
 {
   // open input filestream
-  std::ifstream in(ROOT_DIR_ + path , std::ifstream::in);
+  std::ifstream in(path,std::ifstream::in);
 
   // input file stream is open (exists, not damaged,correct permissions)
   if(in.is_open())

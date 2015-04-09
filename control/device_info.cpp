@@ -1,6 +1,8 @@
+// std
 #include <algorithm>
 #include <sstream>
 
+// class
 #include <device_info.hpp>
 
 namespace gemini
@@ -205,4 +207,4 @@ std::string const device_info::class_string(unsigned short class_id)
   return interface_class;
 }
 
-} // namespace gemini end
+} // namespace gemini

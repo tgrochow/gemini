@@ -25,10 +25,21 @@ namespace gemini
     void update();
     void send_intf_info() const;
     void send_rule_set() const;
-    void read_rule_update();
+    void process_request();
 
 
     private :
+
+    std::string const read_config() const;
+    void reset_config(std::string const& config_name) const;
+    void save_config() const;
+
+
+    static const std::string DEFAULT_RULE_SET;
+
+    enum request_type{UPLOAD_RULE_SET,LOAD_RULE_SET,SAVE_RULE_SET,
+                      UNDEFINED_REQUEST                           };
+
 
     // server
     QLocalServer * intf_info_server,
