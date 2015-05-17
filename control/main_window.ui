@@ -28,38 +28,41 @@
     </property>
     <widget class="QWidget" name="tab_device_tree">
      <attribute name="title">
-      <string>device tree</string>
+      <string>Device tree</string>
      </attribute>
      <widget class="QTreeWidget" name="device_tree">
       <property name="geometry">
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>551</width>
+        <width>601</width>
         <height>521</height>
        </rect>
+      </property>
+      <property name="indentation">
+       <number>20</number>
       </property>
       <property name="sortingEnabled">
        <bool>false</bool>
       </property>
       <attribute name="headerDefaultSectionSize">
-       <number>225</number>
+       <number>275</number>
       </attribute>
       <column>
        <property name="text">
-        <string>device</string>
+        <string>Device</string>
        </property>
       </column>
       <column>
        <property name="text">
-        <string>vendor</string>
+        <string>Vendor</string>
        </property>
       </column>
      </widget>
     </widget>
     <widget class="QWidget" name="tab_rule_editor">
      <attribute name="title">
-      <string>rule editor</string>
+      <string>Rule editor</string>
      </attribute>
      <widget class="QTableWidget" name="rule_table">
       <property name="geometry">
@@ -178,7 +181,7 @@
    </property>
    <widget class="QMenu" name="menu_rule_set">
     <property name="title">
-     <string>rule set</string>
+     <string>Rule set</string>
     </property>
     <addaction name="action_new"/>
     <addaction name="action_open"/>
@@ -188,7 +191,7 @@
    </widget>
    <widget class="QMenu" name="menu_device">
     <property name="title">
-     <string>device tree</string>
+     <string>Device tree</string>
     </property>
     <addaction name="action_hub_visability"/>
    </widget>

@@ -688,9 +688,9 @@ void main_window::init_rule_table_header() const
 {
   QStringList table_header;
 
-  table_header << "bus" << "port" << "vendor" << "product"
-               << "interface class"
-               << "permission";
+  table_header << "Bus" << "Port" << "Vendor" << "Product"
+               << "Interface class"
+               << "Permission";
 
   ui->rule_table->setColumnCount(table_header.size());
   ui->rule_table->setHorizontalHeaderLabels(table_header);
